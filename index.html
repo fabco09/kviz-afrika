@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kvíz: hlavné mestá Afriky</title>
+<style>
+:root{
+  --bg:#f4efe6;--card:#ffffff;--ink:#1f2a24;--muted:#6b7570;--accent:#c2552a;--accent2:#1f6f5b;
+  --ok:#2e8b57;--okbg:#e3f4ea;--bad:#c62828;--badbg:#fbe4e4;--line:#e3dccf;--gold:#d9a52a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;display:flex;justify-content:center}
+.app{width:100%;max-width:560px;padding:16px 14px 32px}
+header{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
+header h1{font-size:1.15rem;margin:0;letter-spacing:.2px}
+header .pill{font-size:.8rem;color:var(--muted);background:var(--card);border:1px solid var(--line);padding:4px 10px;border-radius:999px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 18px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.card+.card{margin-top:14px}
+h2{margin:0 0 10px;font-size:1.35rem}
+p{line-height:1.5;margin:8px 0}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:14px 16px;font-size:1.02rem;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;margin-top:10px;transition:transform .05s}
+.btn:active{transform:scale(.99)}
+.btn.secondary{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn.ghost{background:transparent;color:var(--accent2);border:1px dashed var(--line)}
+.progress{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin:6px 0 14px}
+.progress i{display:block;height:100%;background:var(--accent2);width:0;transition:width .3s}
+.meta{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted);margin-bottom:6px}
+.qtype{display:inline-block;font-size:.72rem;letter-spacing:.4px;text-transform:uppercase;color:var(--accent2);background:#e7f1ee;padding:3px 9px;border-radius:999px;margin-bottom:10px}
+.qtext{font-size:1.12rem;font-weight:600;line-height:1.45;margin:0 0 14px}
+.flag{display:flex;justify-content:center;margin:4px 0 16px}
+.flag svg{width:min(100%,260px);height:auto;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,.18)}
+.opts{display:grid;gap:10px}
+.opt{text-align:left;border:1.5px solid var(--line);background:#fbf9f5;border-radius:12px;padding:13px 14px;font-size:1rem;cursor:pointer;color:var(--ink);line-height:1.3}
+.opt:disabled{cursor:default}
+.opt.ok{background:var(--okbg);border-color:var(--ok);font-weight:700}
+.opt.bad{background:var(--badbg);border-color:var(--bad)}
+.feedback{margin-top:14px;padding:12px 14px;border-radius:12px;font-size:.95rem;line-height:1.45}
+.feedback.ok{background:var(--okbg);border:1px solid #bfe3cc}
+.feedback.bad{background:var(--badbg);border:1px solid #f0c4c4}
+.feedback b{display:block;margin-bottom:4px}
+.score{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.tile{background:#fbf9f5;border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center}
+.tile .v{font-size:1.45rem;font-weight:800}
+.tile .l{font-size:.75rem;color:var(--muted);margin-top:2px}
+.big{font-size:3rem;font-weight:900;text-align:center;margin:6px 0 0;color:var(--accent2)}
+.big span{font-size:1.2rem;color:var(--muted);font-weight:600}
+.verdict{text-align:center;color:var(--muted);margin:2px 0 10px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+td,th{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.3px}
+td.r{text-align:right;white-space:nowrap}
+.bar{height:6px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--accent2)}
+.wrong li{margin:8px 0;line-height:1.4}
+.wrong .q{color:var(--muted);font-size:.85rem}
+.wrong .a{color:var(--bad)}
+.wrong .c{color:var(--ok);font-weight:600}
+ul{padding-left:18px;margin:6px 0}
+.hidden{display:none}
+footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:22px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <h1>Hlavné mestá Afriky</h1>
+  <span class="pill" id="poolInfo"></span>
+</header>
+
+<!-- ÚVOD -->
+<section id="screenHome">
+  <div class="card">
+    <h2>Kvíz</h2>
+    <p>15 otázok na kolo, vždy 4 možnosti. Otázky sa v rámci kola neopakujú a každé kolo má inú zostavu krajín. Po každej odpovedi uvidíš správne riešenie, na konci kola štatistiku.</p>
+    <p class="small muted">Typy otázok: krajina a jej hlavné mesto, vlajka, mesto a jeho krajina, zaujímavosť o meste, zaujímavosť o krajine, región. Vlajky sú zjednodušené kresby.</p>
+    <button class="btn" id="btnStart">Začať kolo</button>
+  </div>
+  <div class="card" id="historyCard">
+    <h2 style="font-size:1.05rem">Tvoje výsledky doteraz</h2>
+    <div class="score">
+      <div class="tile"><div class="v" id="hRounds">0</div><div class="l">odohraných kôl</div></div>
+      <div class="tile"><div class="v" id="hBest">0</div><div class="l">najlepší výsledok</div></div>
+      <div class="tile"><div class="v" id="hAvg">0 %</div><div class="l">priemerná úspešnosť</div></div>
+    </div>
+    <p class="small muted" id="hNote"></p>
+    <button class="btn ghost" id="btnReset">Vymazať históriu</button>
+  </div>
+</section>
+
+<!-- OTÁZKA -->
+<section id="screenQuiz" class="hidden">
+  <div class="card">
+    <div class="meta"><span id="qNum">Otázka 1 z 15</span><span id="qScore">Skóre 0</span></div>
+    <div class="progress"><i id="qBar"></i></div>
+    <span class="qtype" id="qType"></span>
+    <p class="qtext" id="qText"></p>
+    <div class="flag hidden" id="qFlag"></div>
+    <div class="opts" id="qOpts"></div>
+    <div id="qFeedback"></div>
+    <button class="btn hidden" id="btnNext">Ďalšia otázka</button>
+  </div>
+</section>
+
+<!-- VÝSLEDOK -->
+<section id="screenResult" class="hidden">
+  <div class="card">
+    <h2>Koniec kola</h2>
+    <div class="big" id="rScore">0 <span>/ 15</span></div>
+    <p class="verdict" id="rVerdict"></p>
+    <div class="score">
+      <div class="tile"><div class="v" id="rPct">0 %</div><div class="l">úspešnosť</div></div>
+      <div class="tile"><div class="v" id="rTime">0:00</div><div class="l">čas kola</div></div>
+      <div class="tile"><div class="v" id="rStreak">0</div><div class="l">najdlhšia séria</div></div>
+    </div>
+    <button class="btn" id="btnAgain">Nové kolo</button>
+    <button class="btn secondary" id="btnHome">Na úvod</button>
+  </div>
+  <div class="card">
+    <h2 style="font-size:1.05rem">Úspešnosť podľa typu otázky</h2>
+    <table id="rTypes"></table>
+  </div>
+  <div class="card" id="rWrongCard">
+    <h2 style="font-size:1.05rem">Čo si netrafil</h2>
+    <ul class="wrong" id="rWrong"></ul>
+  </div>
+  <div class="card">
+    <h2 style="font-size:1.05rem">Dlhodobá štatistika</h2>
+    <p class="small muted" id="rHistory"></p>
+  </div>
+</section>
+
+<footer>Banka otázok: <span id="qCount"></span> otázok, 54 krajín.<br>Postup sa ukladá len v tomto prehliadači.</footer>
+</div>
+
+<script>
+/* ================= DÁTA ================= */
+/* reg: N severná, W západná, C stredná, E východná, S južná (členenie OSN) */
+const COUNTRIES = [
+{cc:'dz',n:'Alžírsko',c:'Alžír',reg:'N',
+ fc:'Leží na pobreží Stredozemného mora a pre biele fasády domov sa prezýva Biele mesto.',
+ fk:'Rozlohou najväčšia krajina Afriky, viac než 80 % územia pokrýva Sahara.'},
+{cc:'ao',n:'Angola',c:'Luanda',reg:'C',
+ fc:'Prístavné mesto na Atlantiku, ktoré sa v rebríčkoch opakovane objavovalo medzi najdrahšími mestami sveta pre cudzincov.',
+ fk:'Bývalá portugalská kolónia na juhozápade kontinentu, jeden z najväčších producentov ropy v subsaharskej Afrike.'},
+{cc:'bj',n:'Benin',c:'Porto-Novo',reg:'W',
+ fc:'Je oficiálnym hlavným mestom, no sídlo vlády a najväčšie mesto krajiny je Cotonou.',
+ fk:'Krajina v Guinejskom zálive považovaná za kolísku náboženstva vodun (voodoo).'},
+{cc:'bw',n:'Botswana',c:'Gaborone',reg:'S',
+ fc:'Mladé plánované mesto, hlavným sa stalo pri nezávislosti v roku 1966, leží tesne pri hranici s Južnou Afrikou.',
+ fk:'Jeden z najväčších producentov diamantov na svete, nachádza sa tu vnútrozemská delta Okavango.'},
+{cc:'bf',n:'Burkina Faso',c:'Ouagadougou',reg:'W',
+ fc:'Každé dva roky hostí FESPACO, najväčší filmový festival Afriky.',
+ fk:'Názov krajiny znamená približne krajina čestných ľudí, do roku 1984 sa volala Horná Volta.'},
+{cc:'bi',n:'Burundi',c:'Gitega',reg:'E',
+ fc:'Politickým hlavným mestom sa stalo v roku 2019, keď túto úlohu prevzalo od Bujumbury.',
+ fk:'Jedna z najmenších krajín Afriky, leží na brehu jazera Tanganika.'},
+{cc:'cm',n:'Kamerun',c:'Yaoundé',reg:'C',
+ fc:'Prezýva sa mesto siedmich kopcov, rozprestiera sa na pahorkoch vo vnútrozemí.',
+ fk:'Pre geografickú a kultúrnu rozmanitosť sa prezýva Afrika v malom, leží tu najvyššia hora západnej a strednej Afriky.'},
+{cc:'cv',n:'Kapverdy',c:'Praia',reg:'W',
+ fc:'Leží na ostrove Santiago a je najväčším mestom ostrovného štátu.',
+ fk:'Súostrovie v Atlantiku približne 570 km od pobrežia Senegalu, bývalá portugalská kolónia.'},
+{cc:'cf',n:'Stredoafrická republika',c:'Bangui',reg:'C',
+ fc:'Leží na rieke Ubangi, na protiľahlom brehu rieky je už Konžská demokratická republika.',
+ fk:'Vnútrozemská krajina v srdci kontinentu, v jej pralesoch v rezervácii Dzanga-Sangha žijú pralesné slony a gorily.'},
+{cc:'td',n:'Čad',c:'N’Djamena',reg:'C',
+ fc:'Leží na rieke Šari priamo pri hranici s Kamerunom, do roku 1973 sa volalo Fort-Lamy.',
+ fk:'Vnútrozemská krajina, ktorej sever zaberá Sahara a pohorie Tibesti, jazero na jej hranici sa za posledné desaťročia dramaticky zmenšilo.'},
+{cc:'km',n:'Komory',c:'Moroni',reg:'E',
+ fc:'Leží na ostrove Grande Comore (Ngazidja) na úpätí činnej sopky Karthala.',
+ fk:'Súostrovie v Indickom oceáne medzi Madagaskarom a Mozambikom, veľký vývozca ylang-ylangu a vanilky.'},
+{cc:'cg',n:'Konžská republika',c:'Brazzaville',reg:'C',
+ fc:'Leží priamo oproti Kinshase na druhom brehu rieky Kongo, ide o dve najbližšie hlavné mestá sveta (ak nepočítame Rím a Vatikán).',
+ fk:'Menšia z dvoch susediacich krajín s rovnakým názvom, bývalé Francúzske Kongo.'},
+{cc:'cd',n:'Konžská demokratická republika',c:'Kinshasa',reg:'C',
+ fc:'Najväčšie frankofónne mesto sveta, leží na rieke Kongo oproti Brazzaville.',
+ fk:'Rozlohou druhá najväčšia krajina Afriky, preteká ňou druhá najvodnatejšia rieka sveta.'},
+{cc:'ci',n:'Pobrežie Slonoviny',c:'Yamoussoukro',reg:'W',
+ fc:'Oficiálne hlavné mesto od roku 1983, stojí tu Bazilika Panny Márie Kráľovnej pokoja, jedna z najväčších kresťanských stavieb sveta, najväčším mestom krajiny je však Abidjan.',
+ fk:'Najväčší producent kakaa na svete.'},
+{cc:'dj',n:'Džibutsko',c:'Džibuti',reg:'E',
+ fc:'Hlavné mesto nesie rovnaký názov ako krajina, je dôležitým prístavom pri úžine Bab al-Mandab.',
+ fk:'Malá krajina pri Africkom rohu, leží tu jazero Assal, najnižší bod Afriky (asi 155 m pod hladinou mora).'},
+{cc:'eg',n:'Egypt',c:'Káhira',reg:'N',
+ fc:'Najväčšia metropolitná oblasť Afriky, neďaleko ležia pyramídy v Gíze.',
+ fk:'Krajinou preteká Níl, patrí jej aj Suezský prieplav spájajúci Stredozemné a Červené more.'},
+{cc:'gq',n:'Rovníková Guinea',c:'Malabo',reg:'C',
+ fc:'Leží na ostrove Bioko, nie na pevninskej časti krajiny, vláda buduje nové hlavné mesto Ciudad de la Paz.',
+ fk:'Jediná africká krajina, kde je úradným jazykom španielčina.'},
+{cc:'er',n:'Eritrea',c:'Asmara',reg:'E',
+ fc:'Je v zozname UNESCO pre modernistickú architektúru z talianskeho obdobia, prezýva sa Malý Rím.',
+ fk:'Nezávislosť od Etiópie získala v roku 1993, leží na pobreží Červeného mora.'},
+{cc:'sz',n:'Eswatini',c:'Mbabane',reg:'S',
+ fc:'Administratívne hlavné mesto, kráľovským a zákonodarným hlavným mestom je Lobamba.',
+ fk:'Do roku 2018 sa volala Svazijsko, jedna z posledných absolútnych monarchií sveta.'},
+{cc:'et',n:'Etiópia',c:'Addis Abeba',reg:'E',
+ fc:'Sídlo Africkej únie, s výškou okolo 2 355 m je najvyššie položeným hlavným mestom Afriky, názov znamená nový kvet.',
+ fk:'Jediná africká krajina, ktorá nikdy nebola dlhodobo kolonizovaná, má vlastný kalendár a považuje sa za rodisko kávy.'},
+{cc:'ga',n:'Gabon',c:'Libreville',reg:'C',
+ fc:'Názov znamená slobodné mesto, založili ho v roku 1849 oslobodení otroci.',
+ fk:'Takmer 90 % územia pokrývajú dažďové pralesy, krajinou prechádza rovník.'},
+{cc:'gm',n:'Gambia',c:'Banjul',reg:'W',
+ fc:'Leží na ostrove pri ústí rieky, ktorá dala celej krajine meno.',
+ fk:'Najmenšia krajina pevninskej Afriky, z troch strán obklopená Senegalom.'},
+{cc:'gh',n:'Ghana',c:'Akkra',reg:'W',
+ fc:'Leží na pobreží Guinejského zálivu, na námestí Black Star Square sa konajú oslavy nezávislosti.',
+ fk:'Prvá kolónia v subsaharskej Afrike, ktorá získala nezávislosť (1957), predtým sa volala Zlaté pobrežie.'},
+{cc:'gn',n:'Guinea',c:'Konakry',reg:'W',
+ fc:'Rozprestiera sa na polostrove Kaloum a ostrove Tombo na pobreží Atlantiku.',
+ fk:'Má najväčšie zásoby bauxitu na svete, v pohorí Fouta Djallon pramení rieka Niger.'},
+{cc:'gw',n:'Guinea-Bissau',c:'Bissau',reg:'W',
+ fc:'Prístavné mesto pri ústí rieky Geba do Atlantiku.',
+ fk:'Pri jej pobreží leží súostrovie Bijagós, hlavnou vývoznou plodinou sú kešu oriešky.'},
+{cc:'ke',n:'Keňa',c:'Nairobi',reg:'E',
+ fc:'Jediné hlavné mesto sveta, na ktorého území leží národný park s voľne žijúcimi levmi a žirafami, názov pochádza z masajského výrazu pre chladnú vodu.',
+ fk:'Krajinou prechádza Veľká priekopová prepadlina, preslávili ju bežci na dlhé trate a rezervácia Masai Mara.'},
+{cc:'ls',n:'Lesotho',c:'Maseru',reg:'S',
+ fc:'Leží na rieke Caledon priamo na hranici s Južnou Afrikou.',
+ fk:'Kráľovstvo úplne obklopené Južnou Afrikou, celé územie leží vyššie ako 1 400 m, prezýva sa kráľovstvo v oblakoch.'},
+{cc:'lr',n:'Libéria',c:'Monrovia',reg:'W',
+ fc:'Pomenované po americkom prezidentovi Jamesovi Monroeovi.',
+ fk:'Založili ju oslobodení otroci z USA, najstaršia republika Afriky (1847).'},
+{cc:'ly',n:'Líbya',c:'Tripolis',reg:'N',
+ fc:'Prístav na Stredozemnom mori, názov pochádza z gréckeho výrazu pre tri mestá.',
+ fk:'Približne 90 % územia zaberá púšť, krajina má najväčšie overené zásoby ropy v Afrike.'},
+{cc:'mg',n:'Madagaskar',c:'Antananarivo',reg:'E',
+ fc:'Leží v centrálnej vysočine vo výške okolo 1 280 m, názov znamená mesto tisícky.',
+ fk:'Štvrtý najväčší ostrov sveta, väčšina jeho živočíchov vrátane lemurov nežije nikde inde.'},
+{cc:'mw',n:'Malawi',c:'Lilongwe',reg:'E',
+ fc:'Hlavným mestom je od roku 1975, keď nahradilo Zombu.',
+ fk:'Veľké jazero pokrýva zhruba pätinu krajiny, tá sa prezýva teplé srdce Afriky.'},
+{cc:'ml',n:'Mali',c:'Bamako',reg:'W',
+ fc:'Leží na oboch brehoch rieky Niger a patrí k najrýchlejšie rastúcim mestám Afriky.',
+ fk:'Nachádza sa tu legendárne obchodné mesto Timbuktu a hlinená Veľká mešita v Djenné.'},
+{cc:'mr',n:'Mauritánia',c:'Nouakchott',reg:'W',
+ fc:'Postavené takmer od nuly v roku 1958 ako nové hlavné mesto pred nezávislosťou, leží na pobreží Atlantiku na okraji Sahary.',
+ fk:'Nachádza sa tu geologický útvar Richat prezývaný Oko Sahary, premáva tu jeden z najdlhších vlakov sveta so železnou rudou.'},
+{cc:'mu',n:'Maurícius',c:'Port Louis',reg:'E',
+ fc:'Založili ho Francúzi v roku 1735 a pomenovali po kráľovi Ľudovítovi XV.',
+ fk:'Ostrovný štát v Indickom oceáne, kde kedysi žil vyhynutý vták dodo.'},
+{cc:'ma',n:'Maroko',c:'Rabat',reg:'N',
+ fc:'Leží na Atlantiku pri ústí rieky Bú Rakrak, najväčším mestom krajiny je však Casablanca.',
+ fk:'V rokoch 1984 až 2017 nebola členom Africkej únie, nachádza sa tu stredoveká medina vo Fese.'},
+{cc:'mz',n:'Mozambik',c:'Maputo',reg:'E',
+ fc:'Do roku 1976 sa volalo Lourenço Marques, leží na pobreží Indického oceánu.',
+ fk:'Jediná krajina sveta, ktorá má na vlajke modernú útočnú pušku (AK-47), úradným jazykom je portugalčina.'},
+{cc:'na',n:'Namíbia',c:'Windhoek',reg:'S',
+ fc:'Leží vo výške okolo 1 650 m, zachovalo si nemeckú koloniálnu architektúru.',
+ fk:'Nachádza sa tu púšť Namib, považovaná za najstaršiu na svete, krajina patrí k najredšie osídleným na Zemi.'},
+{cc:'ne',n:'Niger',c:'Niamey',reg:'W',
+ fc:'Leží na rieke Niger v juhozápadnom kúte krajiny.',
+ fk:'Jeden z najväčších producentov uránu na svete, asi 80 % územia zaberá Sahara.'},
+{cc:'ng',n:'Nigéria',c:'Abuja',reg:'W',
+ fc:'Plánované mesto, hlavným je od roku 1991, keď nahradilo Lagos, nad mestom sa týči monolit Aso Rock.',
+ fk:'Najľudnatejšia krajina Afriky s viac než 200 miliónmi obyvateľov.'},
+{cc:'rw',n:'Rwanda',c:'Kigali',reg:'E',
+ fc:'Patrí k najčistejším mestám Afriky, igelitové tašky sú v krajine zakázané od roku 2008.',
+ fk:'Prezýva sa krajina tisícich kopcov, v sopečných horách žijú horské gorily.'},
+{cc:'st',n:'Svätý Tomáš a Princov ostrov',c:'São Tomé',reg:'C',
+ fc:'Leží na väčšom z dvoch hlavných ostrovov krajiny, len niekoľko kilometrov od rovníka.',
+ fk:'Druhá najmenšia krajina Afriky, ostrovný štát v Guinejskom zálive známy kakaovými plantážami.'},
+{cc:'sn',n:'Senegal',c:'Dakar',reg:'W',
+ fc:'Leží na polostrove Cap Vert, najzápadnejšom bode pevninskej Afriky, do roku 2007 tu končila slávna púštna rely.',
+ fk:'Pri jej pobreží leží ostrov Gorée, pamiatka na obchod s otrokmi, národným symbolom je baobab.'},
+{cc:'sc',n:'Seychely',c:'Victoria',reg:'E',
+ fc:'Jedno z najmenších hlavných miest sveta s približne 26 000 obyvateľmi, leží na ostrove Mahé.',
+ fk:'Najmenšia krajina Afriky rozlohou aj počtom obyvateľov, rastie tu palma coco de mer s najväčšími semenami na svete.'},
+{cc:'sl',n:'Sierra Leone',c:'Freetown',reg:'W',
+ fc:'Založené v roku 1792 ako osada pre oslobodených otrokov, má jeden z najväčších prírodných prístavov sveta.',
+ fk:'Názov pochádza z portugalčiny a znamená levie hory, krajina je známa ťažbou diamantov.'},
+{cc:'so',n:'Somálsko',c:'Mogadišo',reg:'E',
+ fc:'Starobylý prístav na pobreží Indického oceánu, ktorý bol po stáročia obchodným centrom.',
+ fk:'Má najdlhšie pobrežie pevninskej Afriky, viac než 3 000 km.'},
+{cc:'za',n:'Južná Afrika',c:'Pretória',reg:'S',
+ fc:'Výkonné hlavné mesto, zákonodarným je Kapské Mesto a súdnym Bloemfontein, prezýva sa mesto jakarand.',
+ fk:'Jediná krajina sveta s tromi hlavnými mestami, má 12 úradných jazykov.'},
+{cc:'ss',n:'Južný Sudán',c:'Juba',reg:'E',
+ fc:'Leží na Bielom Níle a je zároveň najväčším mestom krajiny.',
+ fk:'Najmladšia krajina sveta, nezávislosť získala v roku 2011.'},
+{cc:'sd',n:'Sudán',c:'Chartúm',reg:'N',
+ fc:'Leží na sútoku Bieleho a Modrého Nílu.',
+ fk:'Má viac pyramíd než Egypt (lokalita Meroe), do roku 2011 bola najväčšou krajinou Afriky.'},
+{cc:'tz',n:'Tanzánia',c:'Dodoma',reg:'E',
+ fc:'Oficiálnym hlavným mestom je od roku 1996, najväčším mestom a hospodárskym centrom je však Dar es Salaam.',
+ fk:'Nachádza sa tu Kilimandžáro (5 895 m), najvyššia hora Afriky, a súostrovie Zanzibar.'},
+{cc:'tg',n:'Togo',c:'Lomé',reg:'W',
+ fc:'Leží na pobreží Guinejského zálivu priamo pri hranici s Ghanou, jedno z mála hlavných miest priamo na štátnej hranici.',
+ fk:'Úzky pás krajiny, pri pobreží široký len asi 50 km.'},
+{cc:'tn',n:'Tunisko',c:'Tunis',reg:'N',
+ fc:'Neďaleko mesta ležia ruiny starovekého Kartága, historická medina je v zozname UNESCO.',
+ fk:'Leží tu najsevernejší bod Afriky (mys Angela), v roku 2010 tu začala Arabská jar.'},
+{cc:'ug',n:'Uganda',c:'Kampala',reg:'E',
+ fc:'Rozprestiera sa na kopcoch pri Viktóriinom jazere, názov pochádza z výrazu kopec impal.',
+ fk:'Pri meste Jinja vyteká z Viktóriinho jazera Biely Níl, žije tu približne polovica svetovej populácie horských goríl.'},
+{cc:'zm',n:'Zambia',c:'Lusaka',reg:'E',
+ fc:'Hlavným mestom je od roku 1935, keď nahradilo Livingstone, leží vo výške asi 1 280 m.',
+ fk:'Na jej hranici so Zimbabwe ležia Viktóriine vodopády, hospodárstvo stojí na ťažbe medi.'},
+{cc:'zw',n:'Zimbabwe',c:'Harare',reg:'E',
+ fc:'Do roku 1982 sa volalo Salisbury, leží vo výške okolo 1 490 m.',
+ fk:'Názov krajiny pochádza z ruín stredovekého kamenného mesta, v roku 2008 tu hyperinflácia viedla k bankovke s hodnotou 100 biliónov.'}
+];
+
+const REGION = {N:'v severnej Afrike',W:'v západnej Afrike',C:'v strednej Afrike',E:'vo východnej Afrike',S:'v južnej časti Afriky'};
+
+/* ================= VLAJKY (zjednodušené SVG) ================= */
+const W=300,H=200;
+const R=(x,y,w,h,c)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`;
+const P=(pts,c)=>`<polygon points="${pts}" fill="${c}"/>`;
+const C=(cx,cy,r,c)=>`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}"/>`;
+const L=(d,c,w)=>`<path d="${d}" stroke="${c}" stroke-width="${w}" fill="none"/>`;
+function starPts(cx,cy,r,n,ir){const p=[];for(let i=0;i<n*2;i++){const a=-Math.PI/2+i*Math.PI/n;const rr=i%2?ir:r;p.push((cx+rr*Math.cos(a)).toFixed(1)+','+(cy+rr*Math.sin(a)).toFixed(1));}return p;}
+function star(cx,cy,r,c,n=5,ir){return P(starPts(cx,cy,r,n,ir||r*0.382).join(' '),c);}
+function cres(cx,cy,r,c){const d=r*0.42,r2=Math.sqrt(r*r+d*d);return `<path d="M${cx},${cy-r} A${r},${r} 0 0,0 ${cx},${cy+r} A${r2.toFixed(1)},${r2.toFixed(1)} 0 0,1 ${cx},${cy-r} Z" fill="${c}"/>`;}
+function hs(cols,ws){const tot=ws?ws.reduce((a,b)=>a+b,0):cols.length;let y=0,s='';cols.forEach((c,i)=>{const h=H*(ws?ws[i]:1)/tot;s+=R(0,y,W,h+0.5,c);y+=h;});return s;}
+function vs(cols,ws){const tot=ws?ws.reduce((a,b)=>a+b,0):cols.length;let x=0,s='';cols.forEach((c,i)=>{const w=W*(ws?ws[i]:1)/tot;s+=R(x,0,w+0.5,H,c);x+=w;});return s;}
+function pentagram(cx,cy,r,c,w){const p=[];for(let i=0;i<5;i++){const a=-Math.PI/2+i*2*Math.PI/5;p.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]);}const o=[0,2,4,1,3].map(i=>p[i].map(v=>v.toFixed(1)).join(',')).join(' L');return L('M'+o+' Z',c,w);}
+
+const FLAGS = {
+dz: vs(['#006233','#fff'])+cres(150,100,46,'#d21034')+star(172,100,17,'#d21034'),
+ao: hs(['#cc092f','#000'])+L('M185,72 A46,46 0 1,0 150,146','#ffcb00',10)+star(176,86,13,'#ffcb00')+`<rect x="138" y="86" width="10" height="56" fill="#ffcb00" transform="rotate(-35 143 114)"/>`,
+bj: R(0,0,120,200,'#008751')+R(120,0,180,100,'#fcd116')+R(120,100,180,100,'#e8112d'),
+bw: R(0,0,300,200,'#75aadb')+R(0,75,300,50,'#fff')+R(0,82,300,36,'#000'),
+bf: hs(['#ef2b2d','#009e49'])+star(150,100,32,'#fcd116'),
+bi: R(0,0,300,200,'#ce1126')+P('0,0 150,100 0,200','#1eb53a')+P('300,0 150,100 300,200','#1eb53a')+L('M0,0 L300,200 M300,0 L0,200','#fff',28)+C(150,100,46,'#fff')+star(150,78,12,'#ce1126')+star(130,112,12,'#ce1126')+star(170,112,12,'#ce1126'),
+cm: vs(['#007a5e','#ce1126','#fcd116'])+star(150,100,24,'#fcd116'),
+cv: R(0,0,300,200,'#003893')+R(0,100,300,17,'#fff')+R(0,117,300,33,'#cf2027')+R(0,150,300,17,'#fff')+(()=>{let s='';for(let i=0;i<10;i++){const a=i*Math.PI/5;s+=star(112+34*Math.cos(a),125+34*Math.sin(a),7,'#f7d116');}return s;})(),
+cf: hs(['#003082','#fff','#289728','#ffce00'])+R(125,0,50,200,'#d21034')+star(40,25,15,'#ffce00'),
+td: vs(['#002664','#fecb00','#c60c30']),
+km: hs(['#ffc61e','#fff','#ce1126','#3a75c4'])+P('0,0 150,100 0,200','#3d8e33')+cres(52,100,38,'#fff')+[70,90,110,130].map(y=>star(74,y,6,'#fff')).join(''),
+cg: R(0,0,300,200,'#009543')+P('300,0 300,200 0,200','#dc241f')+P('210,0 300,0 90,200 0,200','#fbde4a'),
+cd: R(0,0,300,200,'#007fff')+L('M0,200 L300,0','#f7d618',58)+L('M0,200 L300,0','#ce1021',40)+star(55,52,30,'#f7d618'),
+ci: vs(['#f77f00','#fff','#009e60']),
+dj: hs(['#6ab2e7','#12ad2b'])+P('0,0 150,100 0,200','#fff')+star(55,100,21,'#d7141a'),
+eg: hs(['#ce1126','#fff','#000'])+P('150,68 166,84 162,100 176,124 150,134 124,124 138,100 134,84','#c09300')+R(132,128,36,8,'#c09300'),
+gq: hs(['#3e9a00','#fff','#e32118'])+P('0,0 92,100 0,200','#0073ce')+R(146,104,8,22,'#8a6d3b')+C(150,98,17,'#7a9a6a'),
+er: P('0,0 300,0 300,100','#12ad2b')+P('0,200 300,100 300,200','#4189dd')+P('0,0 300,100 0,200','#ea0437')+L(`M${starPts(100,100,32,24,28).join(' L')} Z`,'#ffc726',5),
+sz: hs(['#3e5eb9','#ffd900','#b10c0c','#ffd900','#3e5eb9'],[3,1,8,1,3])+`<line x1="36" y1="100" x2="264" y2="100" stroke="#a46d2d" stroke-width="4"/>`+`<ellipse cx="150" cy="100" rx="72" ry="30" fill="#000"/>`+`<path d="M150,70 A72,30 0 0,1 150,130 Z" fill="#fff"/>`,
+et: hs(['#078930','#fcdd09','#da121a'])+C(150,100,46,'#0f47af')+L(`M${starPts(150,100,36,5,14).join(' L')} Z`,'#fcdd09',5),
+ga: hs(['#009e60','#fcd116','#3a75c4']),
+gm: hs(['#ce1126','#fff','#0c1c8c','#fff','#3a7728'],[6,1,4,1,6]),
+gh: hs(['#ce1126','#fcd116','#006b3f'])+star(150,100,30,'#000'),
+gn: vs(['#ce1126','#fcd116','#009460']),
+gw: R(0,0,100,200,'#ce1126')+R(100,0,200,100,'#fcd116')+R(100,100,200,100,'#009e49')+star(50,100,26,'#000'),
+ke: hs(['#000','#fff','#bb0000','#fff','#006600'],[6,1,6,1,6])+L('M100,34 L200,166 M200,34 L100,166','#fff',5)+`<ellipse cx="150" cy="100" rx="40" ry="64" fill="#000"/>`+`<ellipse cx="150" cy="100" rx="28" ry="62" fill="#bb0000"/>`+`<ellipse cx="150" cy="100" rx="6" ry="30" fill="#fff"/>`,
+ls: hs(['#00209f','#fff','#009543'],[3,4,3])+P('150,68 116,130 184,130','#000')+R(140,60,20,12,'#000'),
+lr: hs(['#bf0a30','#fff','#bf0a30','#fff','#bf0a30','#fff','#bf0a30','#fff','#bf0a30','#fff','#bf0a30'])+R(0,0,110,109,'#002868')+star(55,54,36,'#fff'),
+ly: hs(['#e70013','#000','#239e46'],[1,2,1])+cres(142,100,30,'#fff')+star(168,100,12,'#fff'),
+mg: R(0,0,100,200,'#fff')+R(100,0,200,100,'#fc3d32')+R(100,100,200,100,'#007e3a'),
+mw: hs(['#000','#ce1126','#339e35'])+L('M150,62 L150,14 M150,62 L108,26 M150,62 L192,26 M150,62 L92,56 M150,62 L208,56','#ce1126',6)+`<path d="M104,66 A46,46 0 0,1 196,66 Z" fill="#ce1126"/>`,
+ml: vs(['#14b53a','#fcd116','#ce1126']),
+mr: R(0,0,300,200,'#00a95c')+R(0,0,300,30,'#d01c1f')+R(0,170,300,30,'#d01c1f')+`<g transform="rotate(-90 150 112)">${cres(150,112,44,'#ffd700')}</g>`+star(150,86,17,'#ffd700'),
+mu: hs(['#ea2839','#1a206d','#ffd500','#00a551']),
+ma: R(0,0,300,200,'#c1272d')+pentagram(150,100,46,'#006233',7),
+mz: hs(['#007168','#fff','#000','#fff','#fce100'],[6,1,6,1,6])+P('0,0 135,100 0,200','#d21034')+star(48,100,30,'#fce100')+R(36,92,24,16,'#fff')+L('M30,86 L66,114','#000',3),
+na: R(0,0,300,200,'#003580')+P('300,0 300,200 0,200','#009543')+L('M0,200 L300,0','#fff',58)+L('M0,200 L300,0','#d21034',38)+star(66,56,36,'#ffce00',12,26)+C(66,56,23,'#003580')+C(66,56,18,'#ffce00'),
+ne: hs(['#e05206','#fff','#0db02b'])+C(150,100,28,'#e05206'),
+ng: vs(['#008751','#fff','#008751']),
+rw: hs(['#00a1de','#fad201','#20603d'],[2,1,1])+star(240,55,32,'#e5be01',24,24)+C(240,55,19,'#e5be01'),
+st: hs(['#12ad2b','#ffce00','#12ad2b'],[1,2,1])+P('0,0 115,100 0,200','#d21034')+star(168,100,20,'#000')+star(228,100,20,'#000'),
+sn: vs(['#00853f','#fdef42','#e31b23'])+star(150,100,27,'#00853f'),
+sc: P('0,0 100,0 0,200','#003f87')+P('100,0 200,0 0,200','#fcd856')+P('200,0 300,0 300,67 0,200','#d62828')+P('300,67 300,133 0,200','#fff')+P('300,133 300,200 0,200','#007a3d'),
+sl: hs(['#1eb53a','#fff','#0072c6']),
+so: R(0,0,300,200,'#4189dd')+star(150,100,50,'#fff'),
+za: R(0,0,300,100,'#de3831')+R(0,100,300,100,'#002395')+L('M0,0 L130,100 L300,100 M0,200 L130,100','#fff',62)+L('M0,0 L130,100 L300,100 M0,200 L130,100','#007a4d',40)+P('0,22 108,100 0,178','#ffb612')+P('0,46 76,100 0,154','#000'),
+ss: hs(['#000','#fff','#da121a','#fff','#078930'],[6,1,6,1,6])+P('0,0 150,100 0,200','#0f47af')+star(56,100,23,'#fcdd09'),
+sd: hs(['#d21034','#fff','#000'])+P('0,0 100,100 0,200','#007229'),
+tz: R(0,0,300,200,'#1eb53a')+P('300,0 300,200 0,200','#00a3dd')+L('M0,200 L300,0','#fcd116',62)+L('M0,200 L300,0','#000',40),
+tg: hs(['#006a4e','#ffce00','#006a4e','#ffce00','#006a4e'])+R(0,0,120,120,'#d21034')+star(60,60,42,'#fff'),
+tn: R(0,0,300,200,'#e70013')+C(150,100,50,'#fff')+cres(150,100,36,'#e70013')+star(166,100,15,'#e70013'),
+ug: hs(['#000','#fcdc04','#d90000','#000','#fcdc04','#d90000'])+C(150,100,33,'#fff')+P('150,82 162,96 156,122 144,122 138,96','#8f9b8f')+C(150,80,6,'#d90000')+L('M148,122 L148,132 M152,122 L152,132','#444',2),
+zm: R(0,0,300,200,'#198a00')+R(195,100,35,100,'#de2010')+R(230,100,35,100,'#000')+R(265,100,35,100,'#ef7d00')+P('212,46 250,28 288,46 258,56 268,88 246,66 230,88 242,56','#ef7d00'),
+zw: hs(['#006400','#ffd200','#d40000','#000','#d40000','#ffd200','#006400'])+P('0,0 150,100 0,200','#fff')+L('M0,0 L150,100 L0,200','#000',6)+star(55,100,34,'#d40000')+P('44,96 72,90 60,106','#ffd200')
+};
+function flagSvg(cc){return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="vlajka"><defs><clipPath id="fc-${cc}"><rect width="${W}" height="${H}"/></clipPath></defs><g clip-path="url(#fc-${cc})">${FLAGS[cc]||R(0,0,W,H,'#ccc')}</g><rect x="0.5" y="0.5" width="${W-1}" height="${H-1}" fill="none" stroke="rgba(0,0,0,.25)"/></svg>`;}
+
+/* ================= BANKA OTÁZOK ================= */
+const TYPES = {
+ country:{label:'Krajina a jej hlavné mesto'},
+ flag:{label:'Vlajka'},
+ capital:{label:'Mesto a jeho krajina'},
+ factCity:{label:'Zaujímavosť o meste'},
+ factCountry:{label:'Zaujímavosť o krajine'},
+ region:{label:'Región'}
+};
+const QUESTIONS = [];
+COUNTRIES.forEach(k=>{
+ QUESTIONS.push({id:k.cc+'-1',type:'country',cc:k.cc,text:`Krajina: ${k.n}. Aké je jej hlavné mesto?`,answer:k.c,pool:'cap'});
+ QUESTIONS.push({id:k.cc+'-2',type:'flag',cc:k.cc,text:'Aké je hlavné mesto krajiny s touto vlajkou?',flag:true,answer:k.c,pool:'cap'});
+ QUESTIONS.push({id:k.cc+'-3',type:'capital',cc:k.cc,text:`Ktorej krajine patrí hlavné mesto ${k.c}?`,answer:k.n,pool:'country'});
+ QUESTIONS.push({id:k.cc+'-4',type:'factCity',cc:k.cc,text:`Ktoré hlavné mesto opisuje tento fakt? ${k.fc}`,answer:k.c,pool:'cap'});
+ QUESTIONS.push({id:k.cc+'-5',type:'factCountry',cc:k.cc,text:`Aké je hlavné mesto krajiny, ktorú opisuje tento fakt? ${k.fk}`,answer:k.c,pool:'cap'});
+ QUESTIONS.push({id:k.cc+'-6',type:'region',cc:k.cc,text:`Ktoré z týchto miest je hlavným mestom krajiny ${REGION[k.reg]}?`,answer:k.c,pool:'region'});
+});
+document.getElementById('qCount').textContent=QUESTIONS.length;
+
+/* ================= POMOCNÉ ================= */
+const byCc=Object.fromEntries(COUNTRIES.map(k=>[k.cc,k]));
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function load(key,def){try{const v=localStorage.getItem('afrika_'+key);return v?JSON.parse(v):def;}catch(e){return def;}}
+function save(key,val){try{localStorage.setItem('afrika_'+key,JSON.stringify(val));}catch(e){}}
+function fmtTime(ms){const s=Math.round(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+function buildOptions(q){
+ const k=byCc[q.cc];
+ let cands;
+ if(q.pool==='country'){cands=COUNTRIES.filter(x=>x.cc!==q.cc).map(x=>({v:x.n,reg:x.reg}));}
+ else if(q.pool==='region'){cands=COUNTRIES.filter(x=>x.reg!==k.reg).map(x=>({v:x.c,reg:x.reg}));}
+ else {cands=COUNTRIES.filter(x=>x.cc!==q.cc).map(x=>({v:x.c,reg:x.reg}));}
+ let picks=[];
+ if(q.pool!=='region'){
+   const same=shuffle(cands.filter(x=>x.reg===k.reg));
+   picks=same.slice(0,2).map(x=>x.v);
+ }
+ const rest=shuffle(cands.filter(x=>!picks.includes(x.v)));
+ for(const x of rest){if(picks.length>=3)break;picks.push(x.v);}
+ return shuffle([q.answer,...picks]);
+}
+
+function pickRound(){
+ let used=load('used',[]);
+ let usedSet=new Set(used);
+ const round=[],cs=new Set();
+ const take=list=>{for(const q of list){if(round.length>=15)break;if(cs.has(q.cc))continue;round.push(q);cs.add(q.cc);}};
+ take(shuffle(QUESTIONS.filter(q=>!usedSet.has(q.id))));
+ let reset=false;
+ if(round.length<15){
+   reset=true;
+   const ids=new Set(round.map(q=>q.id));
+   take(shuffle(QUESTIONS.filter(q=>!ids.has(q.id))));
+ }
+ used=(reset?[]:used).concat(round.map(q=>q.id));
+ save('used',used);
+ updatePoolInfo();
+ return round.map(q=>Object.assign({},q,{options:buildOptions(q)}));
+}
+function updatePoolInfo(){
+ const used=load('used',[]).length;
+ document.getElementById('poolInfo').textContent=`Nepoužité otázky: ${Math.max(0,QUESTIONS.length-used)} z ${QUESTIONS.length}`;
+}
+
+/* ================= STAV ================= */
+let round=[],idx=0,score=0,streak=0,bestStreak=0,startTs=0,answers=[];
+const $=id=>document.getElementById(id);
+function show(id){['screenHome','screenQuiz','screenResult'].forEach(s=>$(s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
+
+function renderHistory(){
+ const h=load('history',[]);
+ $('hRounds').textContent=h.length;
+ $('hBest').textContent=h.length?Math.max(...h.map(r=>r.score))+' / 15':'0';
+ $('hAvg').textContent=h.length?Math.round(h.reduce((a,r)=>a+r.score,0)/(h.length*15)*100)+' %':'0 %';
+ $('hNote').textContent=h.length?`Posledné kolo: ${h[h.length-1].score} z 15 (${new Date(h[h.length-1].ts).toLocaleDateString('sk-SK')}).`:'Zatiaľ si neodohral žiadne kolo.';
+ updatePoolInfo();
+}
+
+function startRound(){
+ round=pickRound();idx=0;score=0;streak=0;bestStreak=0;answers=[];startTs=Date.now();
+ show('screenQuiz');renderQuestion();
+}
+
+function renderQuestion(){
+ const q=round[idx];
+ $('qNum').textContent=`Otázka ${idx+1} z 15`;
+ $('qScore').textContent=`Skóre ${score}`;
+ $('qBar').style.width=(idx/15*100)+'%';
+ $('qType').textContent=TYPES[q.type].label;
+ $('qText').textContent=q.text;
+ const f=$('qFlag');
+ if(q.flag){f.innerHTML=flagSvg(q.cc);f.classList.remove('hidden');}else{f.innerHTML='';f.classList.add('hidden');}
+ const o=$('qOpts');o.innerHTML='';
+ q.options.forEach(opt=>{const b=document.createElement('button');b.className='opt';b.textContent=opt;b.onclick=()=>answer(opt,b);o.appendChild(b);});
+ $('qFeedback').innerHTML='';
+ $('btnNext').classList.add('hidden');
+ $('btnNext').textContent=idx===14?'Zobraziť výsledky':'Ďalšia otázka';
+}
+
+function answer(opt,btn){
+ const q=round[idx],k=byCc[q.cc];
+ const ok=opt===q.answer;
+ document.querySelectorAll('.opt').forEach(b=>{b.disabled=true;if(b.textContent===q.answer)b.classList.add('ok');});
+ if(!ok)btn.classList.add('bad');
+ if(ok){score++;streak++;bestStreak=Math.max(bestStreak,streak);}else streak=0;
+ answers.push({q,chosen:opt,ok});
+ const line=`${k.c} je hlavné mesto krajiny ${k.n}.`;
+ const extra=q.type==='factCity'?'':(q.type==='factCountry'?'':' '+k.fc);
+ $('qFeedback').innerHTML=`<div class="feedback ${ok?'ok':'bad'}"><b>${ok?'Správne.':'Nesprávne. Správna odpoveď: '+q.answer}</b>${line}${extra}</div>`;
+ $('qScore').textContent=`Skóre ${score}`;
+ $('qBar').style.width=((idx+1)/15*100)+'%';
+ $('btnNext').classList.remove('hidden');
+}
+
+function next(){
+ idx++;
+ if(idx>=15)finish();else renderQuestion();
+}
+
+function finish(){
+ const ms=Date.now()-startTs;
+ const h=load('history',[]);h.push({score,ts:Date.now(),ms});save('history',h);
+ $('rScore').innerHTML=`${score} <span>/ 15</span>`;
+ const pct=Math.round(score/15*100);
+ $('rPct').textContent=pct+' %';
+ $('rTime').textContent=fmtTime(ms);
+ $('rStreak').textContent=bestStreak;
+ $('rVerdict').textContent=pct===100?'Bez chyby. Výborne.':pct>=80?'Veľmi dobrý výsledok.':pct>=60?'Slušné, ešte pár kôl a bude to lepšie.':pct>=40?'Základ máš, treba trénovať.':'Ťažké kolo. Skús to znova.';
+ const stats={};
+ answers.forEach(a=>{const t=a.q.type;stats[t]=stats[t]||{n:0,ok:0};stats[t].n++;if(a.ok)stats[t].ok++;});
+ let rows='<tr><th>Typ</th><th>Správne</th><th></th></tr>';
+ Object.keys(TYPES).forEach(t=>{if(!stats[t])return;const s=stats[t];const p=Math.round(s.ok/s.n*100);rows+=`<tr><td>${TYPES[t].label}</td><td class="r">${s.ok} / ${s.n}</td><td style="width:34%"><div class="bar"><i style="width:${p}%"></i></div></td></tr>`;});
+ $('rTypes').innerHTML=rows;
+ const wrong=answers.filter(a=>!a.ok);
+ $('rWrongCard').classList.toggle('hidden',wrong.length===0);
+ $('rWrong').innerHTML=wrong.map(a=>{const k=byCc[a.q.cc];const qt=a.q.flag?`Vlajka krajiny ${k.n}`:a.q.text;return `<li><div class="q">${qt}</div><span class="a">Tvoja odpoveď: ${a.chosen}</span><br><span class="c">Správne: ${a.q.answer}</span> (${k.c}, ${k.n})</li>`;}).join('');
+ const best=Math.max(...h.map(r=>r.score)),avg=Math.round(h.reduce((x,r)=>x+r.score,0)/(h.length*15)*100);
+ $('rHistory').textContent=`Odohrané kolá: ${h.length}. Najlepší výsledok: ${best} z 15. Priemerná úspešnosť: ${avg} %.`;
+ show('screenResult');
+}
+
+$('btnStart').onclick=startRound;
+$('btnAgain').onclick=startRound;
+$('btnNext').onclick=next;
+$('btnHome').onclick=()=>{renderHistory();show('screenHome');};
+$('btnReset').onclick=()=>{
+ if($('btnReset').dataset.confirm==='1'){save('history',[]);save('used',[]);$('btnReset').textContent='Vymazať históriu';$('btnReset').dataset.confirm='0';renderHistory();}
+ else{$('btnReset').textContent='Naozaj vymazať? Klikni ešte raz';$('btnReset').dataset.confirm='1';}
+};
+renderHistory();
+</script>
+</body>
+</html>
